@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0B1E3D">
+<title>宇仁莊 行程管理</title>
+<style>
+/* ▼▼▼ 填入您的 Apps Script Web App 網址（唯一需要修改的地方）▼▼▼ */
+/* 在下方 <script> 區塊中修改 SCRIPT_URL 變數 */
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0B1E3D;--navy2:#152B4E;--accent:#1D6FD9;--accent2:#1558B0;
+  --green:#0F9B72;--border:#E2E8F0;--light:#F4F7FB;--white:#fff;
+  --slate:#4A5568;
+}
+html{height:100%;background:var(--navy)}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--light);color:var(--navy);
+  min-height:100vh;max-width:480px;margin:0 auto;
+  background:var(--white);position:relative;
+}
+
+/* ── Header ── */
+.header{background:var(--navy);padding:env(safe-area-inset-top, 20px) 20px 14px;color:#fff;position:sticky;top:0;z-index:20}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-top:max(env(safe-area-inset-top,0px) - 20px, 0px)}
+.avatar{width:38px;height:38px;border-radius:50%;background:rgba(29,111,217,.7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;border:2px solid rgba(255,255,255,.2)}
+.header h1{font-size:16px;font-weight:700}
+.header p{font-size:11px;color:#8BA3C4;margin-top:2px}
+.date-strip{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.date-strip::-webkit-scrollbar{display:none}
+.date-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:7px 10px;border-radius:10px;cursor:pointer;min-width:44px;border:1.5px solid transparent;transition:all .15s}
+.date-chip .wd{font-size:10px;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:2px}
+.date-chip .dd{font-size:15px;font-weight:700;color:#fff;line-height:1}
+.date-chip.has-ev .dd::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.5);margin:3px auto 0}
+.date-chip.active{background:var(--accent);border-color:rgba(255,255,255,.3)}
+.date-chip.today .dd{color:#FFD166}
+.date-chip:active{transform:scale(.93)}
+
+/* ── 摘要列 ── */
+.day-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 6px;background:var(--white);border-bottom:1px solid #F0F4F8}
+.day-label{font-size:14px;font-weight:700}
+.ev-count{font-size:11px;color:var(--slate);background:var(--light);padding:3px 10px;border-radius:20px;font-weight:500}
+
+/* ── 快速新增 ── */
+.quick-section{padding:14px 20px 8px;background:var(--white)}
+.section-label{font-size:10px;font-weight:700;letter-spacing:1px;color:#94A3B8;text-transform:uppercase;margin-bottom:10px}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.qbtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:13px;border:none;cursor:pointer;background:var(--light);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.qbtn:active{transform:scale(.92)}
+.qbtn .qi{font-size:22px;line-height:1}
+.qbtn .ql{font-size:11px;font-weight:600;color:var(--navy);text-align:center;line-height:1.2}
+.qbtn .qbar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 13px 13px}
+
+/* ── 行程清單 ── */
+.events-section{padding:12px 20px 120px;background:var(--white)}
+.ev-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;position:relative;overflow:hidden}
+.ev-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
+.ev-time{min-width:48px;text-align:right}
+.ev-s{font-size:12px;font-weight:700}
+.ev-e{font-size:11px;color:var(--slate)}
+.ev-div{width:1px;background:var(--border);align-self:stretch;margin:2px 0}
+.ev-info{flex:1;min-width:0}
+.ev-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-loc{font-size:11px;color:var(--slate);margin-top:2px}
+.ev-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:4px}
+.no-ev{text-align:center;padding:32px 0;color:#94A3B8}
+.no-ev span{font-size:36px;display:block;margin-bottom:8px}
+.no-ev p{font-size:13px}
+
+/* ── 底部導覽 ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--white);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 max(12px, env(safe-area-inset-bottom,12px));z-index:30}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#94A3B8;cursor:pointer;padding:0 14px;transition:color .15s}
+.nav-item.active{color:var(--accent)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-fab{width:50px;height:50px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;border:none;cursor:pointer;box-shadow:0 4px 14px rgba(29,111,217,.35);margin-top:-16px;transition:all .15s}
+.nav-fab:active{transform:scale(.91)}
+
+/* ── Overlay & Sheet ── */
+.overlay{position:fixed;inset:0;background:rgba(11,30,61,.45);z-index:40;display:none;backdrop-filter:blur(2px)}
+.overlay.show{display:block}
+.sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;background:var(--white);border-radius:22px 22px 0 0;z-index:50;transition:transform .3s cubic-bezier(.32,0,.67,0);max-height:93vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,20px)}
+.sheet.show{transform:translateX(-50%) translateY(0)}
+.sheet-handle{width:38px;height:4px;border-radius:2px;background:#CBD5E0;margin:12px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--border)}
+.sheet-head h2{font-size:15px;font-weight:700}
+.sheet-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--light);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;color:var(--slate);flex-shrink:0}
+
+/* ── 衝突警示 ── */
+.conflict-box{margin:12px 20px;padding:14px;background:#FFF7EC;border:1.5px solid #F5C47A;border-radius:12px}
+.conflict-title{font-size:13px;font-weight:700;color:#8B5000;margin-bottom:8px}
+.conflict-item{background:#fff;border:1px solid #F5C47A;border-radius:8px;padding:9px 12px;margin-bottom:6px}
+.conflict-item .ct{font-size:13px;font-weight:600;color:#5A3800}
+.conflict-item .ce{font-size:11px;color:#9B6500;margin-top:2px}
+.conflict-actions{display:flex;gap:8px;margin-top:10px}
+.c-cancel{flex:1;padding:10px;border-radius:10px;border:none;background:var(--light);color:var(--slate);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.c-proceed{flex:1;padding:10px;border-radius:10px;border:none;background:#E05C00;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* ── 空閒提示 ── */
+.free-box{margin:12px 20px 0;padding:12px 14px;background:#EEF9F3;border:1.5px solid #8FD4B0;border-radius:12px}
+.free-title{font-size:13px;font-weight:700;color:#0A5C3A}
+.free-sub{font-size:12px;color:#147A50;margin-top:2px}
+
+/* ── 表單 ── */
+.form-body{padding:14px 20px}
+.type-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;color:var(--navy);font-family:inherit;outline:none;background:var(--white);transition:border .15s;-webkit-appearance:none;appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{height:68px;resize:none;font-size:14px}
+.time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.notify-row{display:flex;gap:8px;flex-wrap:wrap}
+.nchip{padding:8px 13px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:var(--slate);transition:all .15s;user-select:none}
+.nchip.on{border-color:var(--accent);background:rgba(29,111,217,.08);color:var(--accent)}
+.contact-row{display:none;margin-top:8px}
+.contact-row.show{display:block}
+.save-btn{width:calc(100% - 40px);margin:4px 20px;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.save-btn:active{background:var(--accent2)}
+.save-btn.loading{background:#94A3B8;pointer-events:none}
+
+/* ── 成功畫面 ── */
+.success-box{text-align:center;padding:32px 20px}
+.success-icon{font-size:52px;margin-bottom:12px}
+.success-title{font-size:19px;font-weight:700;color:var(--green);margin-bottom:6px}
+.success-sub{font-size:13px;color:var(--slate)}
+
+/* ── Loading ── */
+.checking-msg{text-align:center;padding:28px 20px;color:var(--slate)}
+.check-spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:11px;font-size:13px;font-weight:600;z-index:99;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 連線狀態 ── */
+.conn-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;margin:10px 20px;font-size:12px;color:#7F1D1D;display:flex;align-items:center;gap:8px}
+.conn-ok{background:#EEF9F3;border:1px solid #8FD4B0;border-radius:10px;padding:10px 14px;margin:10px 20px;font-size:12px;color:#0A5C3A;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>宇仁 莊 行程管理</h1>
+      <p>syujen@gmail.com</p>
+    </div>
+    <div class="avatar">宇</div>
+  </div>
+  <div class="date-strip" id="dateStrip"></div>
+</div>
+
+<!-- 摘要列 -->
+<div class="day-bar">
+  <div class="day-label" id="dayLabel">今天</div>
+  <div class="ev-count" id="evCount">載入中...</div>
+</div>
+
+<!-- 連線狀態提示 -->
+<div id="connStatus"></div>
+
+<!-- 快速新增 -->
+<div class="quick-section">
+  <div class="section-label">快速新增</div>
+  <div class="quick-grid">
+    <button class="qbtn" onclick="quickAdd('面試','👤','#2D6BE4')">
+      <span class="qi">👤</span><span class="ql">安排面試</span>
+      <div class="qbar" style="background:#2D6BE4"></div>
+    </button>
+    <button class="qbtn" onclick="quickAdd('會議','🗓','#0F9B72')">
+      <span class="qi">🗓</span><span class="ql">管理會議</span>
+      <div class="qbar" style="background:#0F9B72"></div>
+    </button>
+    <button class="qbtn" onclick="quickAdd('查核','✔️','#9B4D0F')">
+      <span class="qi">✔️</span><span class="ql">行政查核</span>
+      <div class="qbar" style="background:#9B4D0F"></div>
+    </button>
+    <button class="qbtn" onclick="quickAdd('出差','✈️','#7B3FB0')">
+      <span class="qi">✈️</span><span class="ql">出差行程</span>
+      <div class="qbar" style="background:#7B3FB0"></div>
+    </button>
+    <button class="qbtn" onclick="quickAdd('督導','💬','#C9880A')">
+      <span class="qi">💬</span><span class="ql">個別督導</span>
+      <div class="qbar" style="background:#C9880A"></div>
+    </button>
+    <button class="qbtn" onclick="quickAdd('訓練','📋','#E24B4A')">
+      <span class="qi">📋</span><span class="ql">教育訓練</span>
+      <div class="qbar" style="background:#E24B4A"></div>
+    </button>
+  </div>
+</div>
+
+<!-- 行程清單 -->
+<div class="events-section" id="eventsSection"></div>
+
+<!-- 底部導覽 -->
+<div class="bottom-nav">
+  <div class="nav-item active"><div class="nav-icon">📅</div>今天</div>
+  <div class="nav-item" onclick="showToast('月曆功能開發中...')"><div class="nav-icon">🗓</div>月曆</div>
+  <button class="nav-fab" onclick="quickAdd('','📌','#1D6FD9')">+</button>
+  <div class="nav-item" onclick="copyShareLink()"><div class="nav-icon">🔗</div>分享</div>
+  <div class="nav-item" onclick="showToast('通知設定開發中...')"><div class="nav-icon">🔔</div>通知</div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+<!-- Sheet -->
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2 id="sheetTitle">新增行程</h2>
+    <div class="sheet-close" onclick="closeSheet()">×</div>
+  </div>
+  <div id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+//  唯一需要修改的地方：把下方網址換成您的 Apps Script Web App 網址
+// ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4Tj6b68ALCfVwjozs4UY19q12ktPKZBAuIBdAbWJe8b1Gxp0MYAcopMtlOaQn7yaB/exec";
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+var selectedDate = getTodayStr();
+var notifyMe = false, notifyContact = false;
+var curType = "", curColor = "", curIcon = "";
+var WD = ["日","一","二","三","四","五","六"];
+var MO = ["一","二","三","四","五","六","七","八","九","十","十一","十二"];
+
+function getTodayStr() {
+  var d = new Date();
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+}
+function pad(n){ return String(n).padStart(2,"0"); }
+
+// ── 日期橫列 ──
+function buildStrip() {
+  var base = new Date(); base.setDate(base.getDate() - 3);
+  var html = "";
+  for (var i = 0; i < 14; i++) {
+    var d = new Date(base); d.setDate(base.getDate() + i);
+    var ds = d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+    html += '<div class="date-chip' + (ds===getTodayStr()?" today":"") + (ds===selectedDate?" active":"") +
+      '" onclick="selDate(\'' + ds + '\')" data-ds="' + ds + '">' +
+      '<div class="wd">' + WD[d.getDay()] + '</div><div class="dd">' + d.getDate() + '</div></div>';
+  }
+  document.getElementById("dateStrip").innerHTML = html;
+}
+
+function selDate(ds) {
+  selectedDate = ds;
+  document.querySelectorAll(".date-chip").forEach(function(c){
+    c.classList.toggle("active", c.dataset.ds === ds);
+  });
+  loadDayEvents();
+}
+
+// ── 載入當日行程 ──
+function loadDayEvents() {
+  var d = new Date(selectedDate + "T12:00:00");
+  var isToday = selectedDate === getTodayStr();
+  document.getElementById("dayLabel").textContent = isToday
+    ? "今天（" + MO[d.getMonth()] + "月" + d.getDate() + "日）"
+    : MO[d.getMonth()] + "月" + d.getDate() + "日（" + WD[d.getDay()] + "）";
+  document.getElementById("evCount").textContent = "查詢中...";
+  document.getElementById("eventsSection").innerHTML =
+    '<div class="checking-msg"><div class="check-spinner"></div>載入行程中...</div>';
+
+  callAPI({ action: "check", date: selectedDate })
+    .then(function(data) {
+      document.getElementById("connStatus").innerHTML =
+        '<div class="conn-ok">✅ 已連線至 Google 日曆</div>';
+      var evs = data.events || [];
+      document.getElementById("evCount").textContent =
+        evs.length ? evs.length + " 個行程" : "今日無行程";
+      renderEvents(evs);
+    })
+    .catch(function(err) {
+      document.getElementById("connStatus").innerHTML =
+        '<div class="conn-err">⚠️ 無法連線至 Apps Script，請確認網址設定正確</div>';
+      document.getElementById("evCount").textContent = "連線失敗";
+      document.getElementById("eventsSection").innerHTML =
+        '<div class="no-ev"><span>📡</span><p>無法取得行程<br><small>請確認 SCRIPT_URL 已填入正確網址</small></p></div>';
+    });
+}
+
+function renderEvents(evs) {
+  if (!evs.length) {
+    document.getElementById("eventsSection").innerHTML =
+      '<div class="no-ev"><span>📭</span><p>今日無行程<br>點上方按鈕快速新增</p></div>';
+    return;
+  }
+  var typeColors = {"面試":"#2D6BE4","會議":"#0F9B72","查核":"#9B4D0F","出差":"#7B3FB0","督導":"#C9880A","訓練":"#E24B4A"};
+  var html = "";
+  evs.forEach(function(ev) {
+    var color = typeColors[ev.type] || "#1D6FD9";
+    html += '<div class="ev-card" style="border-left-color:' + color + '">' +
+      '<div class="ev-time"><div class="ev-s">' + (ev.allDay ? "全天" : ev.start) + '</div>' +
+      (ev.end && !ev.allDay ? '<div class="ev-e">' + ev.end + '</div>' : '') + '</div>' +
+      '<div class="ev-div"></div><div class="ev-info">' +
+      '<div class="ev-title">' + ev.title + '</div>' +
+      '<div class="ev-tag" style="background:' + color + '18;color:' + color + '">' + (ev.type||"行程") + '</div>' +
+      '</div></div>';
+  });
+  document.getElementById("eventsSection").innerHTML = html;
+}
+
+// ── 快速新增流程 ──
+function quickAdd(type, icon, color) {
+  curType = type; curIcon = icon; curColor = color;
+  openSheet((icon ? icon + " " : "") + "新增" + (type || "行程"));
+  document.getElementById("sheetBody").innerHTML =
+    '<div class="checking-msg"><div class="check-spinner"></div>確認 ' + selectedDate + ' 行程衝突...</div>';
+
+  callAPI({ action: "check", date: selectedDate })
+    .then(function(data) {
+      var evs = data.events || [];
+      evs.length > 0 ? showConflict(evs) : showForm(false);
+    })
+    .catch(function() {
+      showToast("⚠️ 無法確認衝突，直接開啟表單");
+      showForm(false);
+    });
+}
+
+function showConflict(evs) {
+  var items = evs.map(function(ev) {
+    return '<div class="conflict-item"><div class="ct">• ' + ev.title + '</div>' +
+      '<div class="ce">' + (ev.allDay ? "全天" : ev.start + " – " + ev.end) + '</div></div>';
+  }).join("");
+  document.getElementById("sheetBody").innerHTML =
+    '<div class="conflict-box"><div class="conflict-title">⚠️ 當日已有 ' + evs.length + ' 個行程</div>' +
+    items +
+    '<div class="conflict-actions"><button class="c-cancel" onclick="closeSheet()">取消</button>' +
+    '<button class="c-proceed" onclick="showForm(true)">仍要新增</button></div></div>';
+}
+
+function showForm(hadConflict) {
+  notifyMe = false; notifyContact = false;
+  var freeHtml = !hadConflict
+    ? '<div class="free-box"><div class="free-title">✅ 當日行程空閒</div><div class="free-sub">可直接新增行程</div></div>' : "";
+  var startVal = selectedDate + "T09:00", endVal = selectedDate + "T10:00";
+
+  document.getElementById("sheetBody").innerHTML =
+    freeHtml +
+    '<div class="form-body">' +
+    '<div class="type-badge" style="background:' + curColor + '18;color:' + curColor + '">' +
+    curIcon + ' ' + (curType || "行程") + '</div>' +
+    '<div class="field"><label>活動標題</label><input type="text" id="fTitle" placeholder="例：面試—王小明" /></div>' +
+    '<div class="field"><label>地點 / 連結</label><input type="text" id="fLoc" placeholder="會議室、城市、Meet 連結..." /></div>' +
+    '<div class="time-row">' +
+    '<div class="field"><label>開始</label><input type="datetime-local" id="fStart" value="' + startVal + '" /></div>' +
+    '<div class="field"><label>結束</label><input type="datetime-local" id="fEnd" value="' + endVal + '" /></div>' +
+    '</div>' +
+    '<div class="field"><label>聯絡人姓名</label><input type="text" id="fName" placeholder="相關人員（選填）" /></div>' +
+    '<div class="field"><label>備註</label><textarea id="fNote" placeholder="注意事項..."></textarea></div>' +
+    '<div class="field"><label>通知</label>' +
+    '<div class="notify-row">' +
+    '<div class="nchip" id="nc1" onclick="toggleN(\'me\')">📱 通知本人</div>' +
+    '<div class="nchip" id="nc2" onclick="toggleN(\'contact\')">📧 通知聯絡人</div>' +
+    '</div><div class="contact-row" id="cRow">' +
+    '<input type="email" id="fEmail" placeholder="聯絡人 Email..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;margin-top:8px" />' +
+    '</div></div></div>' +
+    '<button class="save-btn" id="saveBtn" onclick="doSave()">💾 儲存至 Google 日曆</button>' +
+    '<div style="height:12px"></div>';
+}
+
+function toggleN(who) {
+  if (who === "me") { notifyMe = !notifyMe; document.getElementById("nc1").classList.toggle("on", notifyMe); }
+  else { notifyContact = !notifyContact; document.getElementById("nc2").classList.toggle("on", notifyContact); document.getElementById("cRow").classList.toggle("show", notifyContact); }
+}
+
+function doSave() {
+  var title = (document.getElementById("fTitle")||{}).value || ""; title = title.trim();
+  if (!title) { showToast("請輸入活動標題"); return; }
+  var start = (document.getElementById("fStart")||{}).value;
+  var end   = (document.getElementById("fEnd")||{}).value;
+  if (!start || !end) { showToast("請設定時間"); return; }
+
+  var btn = document.getElementById("saveBtn");
+  btn.classList.add("loading");
+  btn.innerHTML = '<div class="spinner"></div> 儲存中...';
+
+  callAPI({
+    action: "create", title: title, type: curType || "其他",
+    startTime: new Date(start).toISOString(),
+    endTime:   new Date(end).toISOString(),
+    location:  (document.getElementById("fLoc")||{}).value || "",
+    contactName: (document.getElementById("fName")||{}).value || "",
+    note:      (document.getElementById("fNote")||{}).value || "",
+    contactEmail: notifyContact ? ((document.getElementById("fEmail")||{}).value || "") : "",
+    notifyMe:  notifyMe,
+  })
+  .then(function(data) {
+    if (data.success) {
+      document.getElementById("sheetBody").innerHTML =
+        '<div class="success-box"><div class="success-icon">✅</div>' +
+        '<div class="success-title">已新增至 Google 日曆</div>' +
+        '<div class="success-sub">' + title + '</div></div>';
+      loadDayEvents();
+      setTimeout(closeSheet, 1800);
+    } else {
+      showToast("❌ " + (data.message || "新增失敗"));
+      btn.classList.remove("loading");
+      btn.innerHTML = '💾 儲存至 Google 日曆';
+    }
+  })
+  .catch(function() {
+    showToast("❌ 連線失敗，請稍後再試");
+    btn.classList.remove("loading");
+    btn.innerHTML = '💾 儲存至 Google 日曆';
+  });
+}
+
+// ── API 呼叫（自動重試一次） ──
+function callAPI(payload) {
+  return fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(payload)
+  }).then(function(r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  });
+}
+
+// ── Sheet 開關 ──
+function openSheet(title) {
+  document.getElementById("sheetTitle").textContent = title;
+  document.getElementById("overlay").classList.add("show");
+  document.getElementById("sheet").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+function closeSheet() {
+  document.getElementById("overlay").classList.remove("show");
+  document.getElementById("sheet").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+// ── 分享連結 ──
+function copyShareLink() {
+  var url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function(){ showToast("📋 連結已複製！"); });
+  } else {
+    showToast("網址：" + url);
+  }
+}
+
+// ── Toast ──
+function showToast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+
+// ── 初始化 ──
+buildStrip();
+loadDayEvents();
+</script>
+</body>
+</html>
