@@ -143,6 +143,44 @@ body{
 /* ── 連線狀態 ── */
 .conn-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;margin:10px 20px;font-size:12px;color:#7F1D1D;display:flex;align-items:center;gap:8px}
 .conn-ok{background:#EEF9F3;border:1px solid #8FD4B0;border-radius:10px;padding:10px 14px;margin:10px 20px;font-size:12px;color:#0A5C3A;display:flex;align-items:center;gap:8px}
+
+/* ── 臨時記事區塊 ── */
+.notes-section{padding:0 20px 12px;background:var(--white)}
+.notes-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;border-top:1px solid #F0F4F8}
+.notes-header-left{display:flex;align-items:center;gap:8px}
+.notes-title{font-size:13px;font-weight:700;color:var(--navy)}
+.notes-count{font-size:10px;font-weight:700;background:#FEF9C3;color:#854D0E;padding:2px 8px;border-radius:20px;border:1px solid #FDE68A}
+.note-add-btn{display:flex;align-items:center;gap:5px;padding:7px 13px;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:20px;font-size:12px;font-weight:700;color:#854D0E;cursor:pointer;transition:all .15s}
+.note-add-btn:active{transform:scale(.95);background:#FEF3C7}
+.note-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
+.note-card{background:#FFFDF0;border:1.5px solid #FDE68A;border-radius:12px;padding:12px 14px;position:relative}
+.note-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.note-date-badge{font-size:10px;font-weight:700;color:#854D0E;background:#FEF3C7;padding:2px 8px;border-radius:20px}
+.note-actions{display:flex;gap:6px}
+.note-action-btn{width:26px;height:26px;border-radius:7px;border:1px solid #FDE68A;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#854D0E;transition:all .15s}
+.note-action-btn:active{transform:scale(.92)}
+.note-items{list-style:none;display:flex;flex-direction:column;gap:4px}
+.note-item{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;line-height:1.5;padding:3px 0}
+.note-item-dot{width:6px;height:6px;border-radius:50%;background:#F59E0B;flex-shrink:0;margin-top:6px}
+.note-item-text{flex:1;word-break:break-word}
+.note-item-text.done{text-decoration:line-through;color:#94A3B8}
+.note-item-cb{width:16px;height:16px;border-radius:4px;border:1.5px solid #FDE68A;flex-shrink:0;margin-top:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;background:#fff;transition:all .15s}
+.note-item-cb.checked{background:#F59E0B;border-color:#F59E0B;color:#fff}
+.note-empty{text-align:center;padding:16px 0;color:#94A3B8;font-size:12px}
+
+/* ── 記事 Sheet 樣式 ── */
+.note-form-body{padding:14px 20px}
+.note-input-area{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--navy);font-family:inherit;outline:none;background:var(--white);transition:border .15s;resize:none;height:54px;line-height:1.5}
+.note-input-area:focus{border-color:#F59E0B}
+.note-items-editor{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.note-item-row{display:flex;align-items:center;gap:8px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;padding:8px 10px}
+.note-item-input{flex:1;border:none;background:transparent;font-size:13px;color:var(--navy);font-family:inherit;outline:none}
+.note-item-del{width:22px;height:22px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:#DC2626;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.note-add-item-btn{display:flex;align-items:center;gap:6px;padding:9px 14px;background:#FFFBEB;border:1.5px dashed #FDE68A;border-radius:9px;font-size:12px;font-weight:600;color:#854D0E;cursor:pointer;width:100%;justify-content:center;transition:all .15s}
+.note-add-item-btn:active{background:#FEF3C7}
+.note-save-btn{width:calc(100% - 40px);margin:4px 20px;padding:14px;background:#F59E0B;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.note-save-btn:active{background:#D97706}
+.note-save-btn.loading{background:#94A3B8;pointer-events:none}
 </style>
 </head>
 <body>
@@ -152,7 +190,7 @@ body{
   <div class="header-top">
     <div>
       <h1>宇仁 莊 行程管理</h1>
-      <p>syujen@gmail.com</p>
+      <p><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="44373d312e212a042329252d286a272b29">[email&#160;protected]</a></p>
     </div>
     <div class="avatar">宇</div>
   </div>
@@ -202,13 +240,28 @@ body{
 <!-- 行程清單 -->
 <div class="events-section" id="eventsSection"></div>
 
+<!-- 臨時記事區塊 -->
+<div class="notes-section" id="notesSection">
+  <div class="notes-header">
+    <div class="notes-header-left">
+      <span style="font-size:16px">📝</span>
+      <div class="notes-title">當日記事</div>
+      <div class="notes-count" id="notesCount" style="display:none">0 則</div>
+    </div>
+    <button class="note-add-btn" onclick="openNoteSheet()">＋ 新增記事</button>
+  </div>
+  <div class="note-list" id="noteList">
+    <div class="note-empty">尚無記事，點右上角新增</div>
+  </div>
+</div>
+
 <!-- 底部導覽 -->
 <div class="bottom-nav">
   <div class="nav-item active"><div class="nav-icon">📅</div>今天</div>
   <div class="nav-item" onclick="showToast('月曆功能開發中...')"><div class="nav-icon">🗓</div>月曆</div>
   <button class="nav-fab" onclick="quickAdd('','📌','#1D6FD9')">+</button>
   <div class="nav-item" onclick="copyShareLink()"><div class="nav-icon">🔗</div>分享</div>
-  <div class="nav-item" onclick="showToast('通知設定開發中...')"><div class="nav-icon">🔔</div>通知</div>
+  <div class="nav-item" onclick="openNoteSheet()"><div class="nav-icon">📝</div>記事</div>
 </div>
 
 <!-- Overlay -->
@@ -226,11 +279,11 @@ body{
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
 //  唯一需要修改的地方：把下方網址換成您的 Apps Script Web App 網址
 // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4Tj6b68ALCfVwjozs4UY19q12ktPKZBAuIBdAbWJe8b1Gxp0MYAcopMtlOaQn7yaB/exec";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtXV3rpwlXZ2TM1bAfzTgBByBXMNl9jEfiyw_ugfBjABvGpvA7Qm4ZmUOtjWx5K6iiiA/exec";
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 var selectedDate = getTodayStr();
@@ -466,9 +519,259 @@ function showToast(msg) {
   setTimeout(function(){ t.classList.remove("show"); }, 2600);
 }
 
+// ════════════════════════════════════════════════════
+//  臨時記事功能
+//  儲存方式：localStorage（本機）+ 可選同步至 Google 日曆
+// ════════════════════════════════════════════════════
+var noteItems = [];  // 目前編輯中的列點
+
+// 從 localStorage 讀取當日記事
+function loadNotes() {
+  var key = "notes_" + selectedDate;
+  var raw = localStorage.getItem(key);
+  var notes = raw ? JSON.parse(raw) : [];
+  renderNotes(notes);
+}
+
+// 儲存記事到 localStorage
+function saveNotesToLocal(notes) {
+  var key = "notes_" + selectedDate;
+  localStorage.setItem(key, JSON.stringify(notes));
+}
+
+// 取得當日所有記事
+function getNotesForDate() {
+  var key = "notes_" + selectedDate;
+  var raw = localStorage.getItem(key);
+  return raw ? JSON.parse(raw) : [];
+}
+
+// 渲染記事清單
+function renderNotes(notes) {
+  var list = document.getElementById("noteList");
+  var count = document.getElementById("notesCount");
+  if (!notes || !notes.length) {
+    list.innerHTML = '<div class="note-empty">尚無記事，點右上角新增</div>';
+    count.style.display = "none";
+    return;
+  }
+  count.textContent = notes.length + " 則";
+  count.style.display = "";
+  var html = "";
+  notes.forEach(function(note, ni) {
+    var itemsHtml = (note.items || []).map(function(item, ii) {
+      return '<li class="note-item">' +
+        '<div class="note-item-cb ' + (item.done ? "checked" : "") + '" onclick="toggleNoteItem(' + ni + ',' + ii + ')">' +
+        (item.done ? "✓" : "") + '</div>' +
+        '<span class="note-item-text' + (item.done ? " done" : "") + '">' + escHtml(item.text) + '</span>' +
+        '</li>';
+    }).join("");
+    html += '<div class="note-card">' +
+      '<div class="note-card-head">' +
+      '<div class="note-date-badge">📝 ' + selectedDate + '</div>' +
+      '<div class="note-actions">' +
+      '<div class="note-action-btn" onclick="openNoteSheet(' + ni + ')" title="編輯">✏️</div>' +
+      '<div class="note-action-btn" onclick="deleteNote(' + ni + ')" title="刪除">🗑</div>' +
+      '</div></div>' +
+      '<ul class="note-items">' + itemsHtml + '</ul>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+
+// 勾選 / 取消勾選項目
+function toggleNoteItem(noteIdx, itemIdx) {
+  var notes = getNotesForDate();
+  if (!notes[noteIdx] || !notes[noteIdx].items[itemIdx]) return;
+  notes[noteIdx].items[itemIdx].done = !notes[noteIdx].items[itemIdx].done;
+  saveNotesToLocal(notes);
+  renderNotes(notes);
+}
+
+// 刪除整則記事
+function deleteNote(noteIdx) {
+  if (!confirm("確定刪除這則記事？")) return;
+  var notes = getNotesForDate();
+  notes.splice(noteIdx, 1);
+  saveNotesToLocal(notes);
+  renderNotes(notes);
+  showToast("🗑 記事已刪除");
+}
+
+// 開啟記事 Sheet（新增 or 編輯）
+function openNoteSheet(editIdx) {
+  var isEdit = (editIdx !== undefined && editIdx !== null);
+  openSheet(isEdit ? "✏️ 編輯記事" : "📝 新增記事");
+
+  // 準備初始項目
+  if (isEdit) {
+    var notes = getNotesForDate();
+    noteItems = (notes[editIdx] && notes[editIdx].items) ? JSON.parse(JSON.stringify(notes[editIdx].items)) : [];
+  } else {
+    noteItems = [{ text: "", done: false }];
+  }
+
+  renderNoteForm(isEdit ? editIdx : null);
+}
+
+// 渲染記事表單
+function renderNoteForm(editIdx) {
+  var itemsHtml = noteItems.map(function(item, i) {
+    return '<div class="note-item-row" id="nrow_' + i + '">' +
+      '<span style="font-size:14px;flex-shrink:0">•</span>' +
+      '<input class="note-item-input" type="text" id="nitem_' + i + '" ' +
+      'value="' + escAttr(item.text) + '" placeholder="輸入記事內容..." ' +
+      'onkeydown="noteItemKeydown(event,' + i + ')" />' +
+      '<button class="note-item-del" onclick="removeNoteItem(' + i + ')">✕</button>' +
+      '</div>';
+  }).join("");
+
+  var calSyncHtml =
+    '<div style="margin-top:6px">' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--slate);cursor:pointer">' +
+    '<input type="checkbox" id="syncToCalendar" style="width:16px;height:16px;accent-color:#F59E0B"> ' +
+    '同步儲存至 Google 日曆（當日全天事件備註）' +
+    '</label></div>';
+
+  document.getElementById("sheetBody").innerHTML =
+    '<div class="note-form-body">' +
+    '<div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📅 ' + selectedDate + ' 的記事</div>' +
+    '<div class="note-items-editor" id="noteItemsEditor">' + itemsHtml + '</div>' +
+    '<button class="note-add-item-btn" onclick="addNoteItem()">＋ 新增一列</button>' +
+    calSyncHtml +
+    '</div>' +
+    '<button class="note-save-btn" id="noteSaveBtn" onclick="saveNote(' + (editIdx !== null && editIdx !== undefined ? editIdx : -1) + ')">💾 儲存記事</button>' +
+    '<div style="height:12px"></div>';
+
+  // focus 第一格
+  setTimeout(function() {
+    var first = document.getElementById("nitem_0");
+    if (first) first.focus();
+  }, 300);
+}
+
+// 新增一列
+function addNoteItem() {
+  // 先同步目前輸入值
+  syncNoteInputs();
+  noteItems.push({ text: "", done: false });
+  renderNoteForm(null);
+  // focus 新列
+  setTimeout(function() {
+    var el = document.getElementById("nitem_" + (noteItems.length - 1));
+    if (el) el.focus();
+  }, 50);
+}
+
+// 移除一列
+function removeNoteItem(idx) {
+  syncNoteInputs();
+  if (noteItems.length <= 1) { showToast("至少保留一列"); return; }
+  noteItems.splice(idx, 1);
+  renderNoteForm(null);
+}
+
+// Enter 自動下一列
+function noteItemKeydown(e, idx) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    syncNoteInputs();
+    noteItems.splice(idx + 1, 0, { text: "", done: false });
+    renderNoteForm(null);
+    setTimeout(function() {
+      var el = document.getElementById("nitem_" + (idx + 1));
+      if (el) el.focus();
+    }, 50);
+  }
+  if (e.key === "Backspace") {
+    var val = document.getElementById("nitem_" + idx);
+    if (val && val.value === "" && noteItems.length > 1) {
+      e.preventDefault();
+      syncNoteInputs();
+      noteItems.splice(idx, 1);
+      renderNoteForm(null);
+      setTimeout(function() {
+        var prev = document.getElementById("nitem_" + Math.max(0, idx - 1));
+        if (prev) { prev.focus(); prev.setSelectionRange(prev.value.length, prev.value.length); }
+      }, 50);
+    }
+  }
+}
+
+// 把 input 目前值同步到 noteItems
+function syncNoteInputs() {
+  noteItems.forEach(function(item, i) {
+    var el = document.getElementById("nitem_" + i);
+    if (el) item.text = el.value;
+  });
+}
+
+// 儲存記事
+function saveNote(editIdx) {
+  syncNoteInputs();
+  var filled = noteItems.filter(function(it) { return it.text.trim() !== ""; });
+  if (!filled.length) { showToast("請至少輸入一列內容"); return; }
+
+  var notes = getNotesForDate();
+  var noteObj = { date: selectedDate, items: filled, updatedAt: new Date().toISOString() };
+
+  if (editIdx >= 0 && editIdx < notes.length) {
+    notes[editIdx] = noteObj;
+  } else {
+    notes.push(noteObj);
+  }
+  saveNotesToLocal(notes);
+  renderNotes(notes);
+
+  // 選擇性同步至 Google 日曆
+  var syncChk = document.getElementById("syncToCalendar");
+  if (syncChk && syncChk.checked) {
+    syncNoteToCalendar(noteObj, editIdx >= 0);
+  } else {
+    showToast("📝 記事已儲存");
+    closeSheet();
+  }
+}
+
+// 同步記事到 Google 日曆（全天事件）
+function syncNoteToCalendar(noteObj, isUpdate) {
+  var btn = document.getElementById("noteSaveBtn");
+  btn.classList.add("loading");
+  btn.innerHTML = '<div class="spinner"></div> 同步中...';
+
+  var desc = noteObj.items.map(function(it, i) {
+    return (i + 1) + ". " + it.text;
+  }).join("\n");
+
+  callAPI({
+    action: "saveNote",
+    date: noteObj.date,
+    description: desc,
+    isUpdate: isUpdate,
+  })
+  .then(function(data) {
+    showToast(data.success ? "📝 記事已儲存並同步至日曆" : "📝 記事已存於本機（日曆同步失敗）");
+    closeSheet();
+    loadDayEvents();
+  })
+  .catch(function() {
+    showToast("📝 記事已存於本機（日曆同步失敗）");
+    closeSheet();
+  });
+}
+
+// 工具：HTML 跳脫
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(s) {
+  return String(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
 // ── 初始化 ──
 buildStrip();
 loadDayEvents();
+loadNotes();
 </script>
 </body>
 </html>
